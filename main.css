@@ -1,0 +1,31 @@
+body{
+    margin: 0;
+}
+
+.toolbar{
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    width: 80px;
+    background-color: whitesmoke;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+    text-align: center;
+    padding-top: 15px;
+    padding-bottom: 15px;
+}
+
+.material-icons{
+    padding-top: 15px;
+    padding-bottom: 15px;
+    font-size: 30px;
+    color: lightslategray;
+    transition: 0.2s;
+    -webkit-user-select: none; /* Safari */        
+    -moz-user-select: none; /* Firefox */
+    -ms-user-select: none; /* IE10+/Edge */
+    user-select: none; /* Standard */
+}
+
+.material-icons:hover{
+    color: orange;
+}
