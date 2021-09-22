@@ -250,6 +250,26 @@ class MapEditor {
         })
     }
 
+    changePolygonsColors(layerName, mapGenerator) {
+        let selectedLayer = undefined
+        this.layers.forEach((layerObj) => {
+            if (layerObj['name'] === layerName) {
+                selectedLayer = layerObj['layer']
+            }
+        })
+
+        if (selectedLayer === undefined) {
+            return
+        }
+
+        let children = selectedLayer['children']
+
+        children.forEach((child, index) => {
+            child.fill(mapGenerator.perlinPolygons[index])
+            child.stroke(mapGenerator.perlinPolygons[index])
+        })
+    }
+
     /*
         Main function: the base of the program
         It has object instances, value settings and
@@ -259,20 +279,35 @@ class MapEditor {
         this.createNewLayer('base')
         this.enableMouseScale()
 
-        let mapGenerator = new MapGenerator(100, 50, this.width, this.height)
+        let mapGenerator = new MapGenerator(20, 20, this.width, this.height)
         mapGenerator.generatePoints()
-        this.drawPoints('base', mapGenerator.points)
+        //this.drawPoints('base', mapGenerator.points)
 
         mapGenerator.generateVoronoi()
         mapGenerator.generatePolygonsFromVoronoiCells()
 
         this.drawPolygons('base', mapGenerator.polygons, mapGenerator)
-        mapGenerator.createPerlinNoiseMap()
+
+
+        let heightMap = new HeightMap()
+        let ocean = heightMap.createNewHeightMap(-1, -0.8, '#0c6687')
+        let lowForest = heightMap.createNewHeightMap(-0.8, 0, '#6dc965')
+        let forest = heightMap.createNewHeightMap(0, 0.8, '#569437')
+        let snow = heightMap.createNewHeightMap(0.8, 1, '#3a6325')
+        heightMap.addHeightRange(ocean)
+        heightMap.addHeightRange(lowForest)
+        heightMap.addHeightRange(forest)
+        heightMap.addHeightRange(snow)
+
+        mapGenerator.createPerlinNoiseMap(heightMap)
+        this.changePolygonsColors('base', mapGenerator)
+
+        mapGenerator.assignHeightMap(heightMap)
 
         let toolBox = new ToolBox()
         // toolBox.addButton('newFile', , 'toggle')
         // toolBox.addButton('panTool', , 'toggle')
-        // toolBox.addButton('generateLandscape', , 'toggle')
+        //toolBox.addButton('generateLandscape', , 'toggle')
         // toolBox.addButton('increase', , 'toggle')
         // toolBox.addButton('decrease', , 'toggle')
         // toolBox.addButton('save', , 'toggle')
@@ -302,6 +337,8 @@ class MapGenerator {
         this.polygons = undefined
         this.generatedPolygons = undefined
         this.perlinMap = undefined
+        this.perlinPolygons = undefined
+        this.heightMap = []
     }
 
     /*
@@ -415,10 +452,7 @@ class MapGenerator {
         Aux function to convert a rgb value to a hex value
     */
     rgbToHex(r, g, b) {
-        var red = rgbToHex(r);
-        var green = rgbToHex(g);
-        var blue = rgbToHex(b);
-        return red + green + blue;
+        return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
     }
 
     /*
@@ -426,19 +460,91 @@ class MapGenerator {
         a random seed. After that, get samples of each cells centroid
         to use as reference to paint the polygons later on
     */
-    createPerlinNoiseMap() {
+    createPerlinNoiseMap(heightMap) {
         perlin.seed(Math.random())
         //console.log(this.generatedPolygons)
 
-        this.generatedPolygons.forEach((polygon) => {
-            let perlinPoint = perlin.get(polygon['attrs']['cp'].x, polygon['attrs']['cp'].y)
-            //Math.trunc(this.map(perlinPoint, -1, 1, 0, 255))
-            let truncPerlin = Math.trunc(this.map(perlinPoint, -1, 1, 0, 255))
+        let perlinHexPolygonColor = []
+        let gen = new NoiseGenerator('mapa')
 
+        this.generatedPolygons.forEach((polygon) => {
+            let perlinPoint = gen.noise(polygon['attrs']['cp'].x, polygon['attrs']['cp'].y)
+            //Math.trunc(this.map(perlinPoint, -1, 1, 0, 255))
+            //let truncPerlin = Math.trunc(this.map(perlinPoint, -1, 1, 0, 255))
+            //let perlinHexBW = this.rgbToHex(truncPerlin, truncPerlin, truncPerlin)
+            //console.log(truncPerlin)
+            perlinHexPolygonColor.push(perlinPoint)
+            //console.log(perlinPoint)
         })
+
+        this.perlinPolygons = perlinHexPolygonColor
+
+        this.assignHeightMap(heightMap)
+    }
+
+    assignHeightMap(heightMap) {
+        //console.log(heightMap)
+        //console.log(this.perlinPolygons)
+        let auxArray = []
+        this.perlinPolygons.forEach((element) => {
+            auxArray.push(heightMap.getColorFromHeight(element))
+            //console.log(auxArray)
+        })
+        console.log(auxArray)
+        this.perlinPolygons = auxArray
     }
 
 }
+
+class NoiseGenerator {
+    constructor(seed = Math.random()) {
+        this.gen = new SimplexNoise(seed)
+    }
+
+    noise(nx, ny) {
+        return this.gen.noise2D(nx, ny)
+    }
+}
+
+class HeightMap {
+    constructor(array = []) {
+        this.heightMap = array
+        /*
+            [
+                ...,
+                {
+                    min: x,
+                    max: y,
+                    color: 'color'
+                },
+                ...
+            ]
+        */
+    }
+
+    createNewHeightMap(min, max, color) {
+        return {
+            min: min,
+            max: max,
+            color: color
+        }
+    }
+
+    addHeightRange(heightRangeObj) {
+        this.heightMap.push(heightRangeObj)
+    }
+
+    getColorFromHeight(height) {
+        let color = undefined
+        this.heightMap.forEach((element) => {
+            if (height >= element['min'] && height < element['max']) {
+                color = element['color']
+            }
+        })
+        return (color === undefined) ? '#000000' : color
+    }
+}
+
 
 /*
     This class is used to assign function to every button on the toolbox
@@ -481,7 +587,7 @@ class ToolBox {
 }
 
 //Create a new mapEditor and call the main function
-let mapEditor = new MapEditor('container', 2000, 2000)
+let mapEditor = new MapEditor('container', innerWidth, innerHeight)
 mapEditor.main()
 
 /*
