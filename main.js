@@ -195,19 +195,9 @@ class MapEditor {
                     points: aux,
                     fill: '#003C5F',
                     opacity: 0.95,
-                    stroke: '#00304d',
-                    strokeWidth: 1,
                     closed: true,
                     perfectDrawEnabled: false,
                 })
-
-                kPolygon.on('mouseover', function () {
-                    this.opacity(1);
-                });
-
-                kPolygon.on('mouseout', function () {
-                    this.opacity(0.95);
-                });
 
                 Object.defineProperty(kPolygon['attrs'], 'cp', {
                     value: polygon[0].cp
@@ -228,7 +218,7 @@ class MapEditor {
         and change the canva position and scale using a event listener
     */
     enableMouseScale() {
-        let scaleBy = 1.05
+        let scaleBy = 1.1
         this.stage.on('wheel', (e) => {
             e.evt.preventDefault();
             let oldScale = this.stage.scaleX();
@@ -266,8 +256,50 @@ class MapEditor {
 
         children.forEach((child, index) => {
             child.fill(mapGenerator.perlinPolygons[index])
-            child.stroke(mapGenerator.perlinPolygons[index])
         })
+    }
+
+    cleanLayer(layerName) {
+        let selectedLayer = undefined
+        this.layers.forEach((layerObj) => {
+            if (layerObj['name'] === layerName) {
+                selectedLayer = layerObj['layer']
+            }
+        })
+
+        if (selectedLayer === undefined) {
+            return
+        }
+
+        selectedLayer.destroyChildren()
+        console.log(selectedLayer['children'])
+    }
+
+    regenerate() {
+        // let { mapEditor, mapGenerator, layerName, heightMap } = mapObjects
+        // mapEditor.cleanLayer(layerName)
+        // mapGenerator.generatePoints()
+        // mapGenerator.generateVoronoi()
+        // mapGenerator.generatePolygonsFromVoronoiCells()
+        // mapEditor.drawPolygons(layerName, mapGenerator.polygons, mapGenerator)
+        // mapGenerator.createPerlinNoiseMap(heightMap)
+        // mapEditor.changePolygonsColors(layerName, mapGenerator)
+        if (window.confirm("Do you really want to refresh the page to generate a new terrain? You will lost all data!")) {
+            window.location.reload();
+        }
+    }
+
+    exportStage(infoObj) {
+        let { stage } = infoObj
+        let dataURL = stage.toDataURL({ pixelRatio: 3 })
+        let name = 'rpgMap.png'
+
+        let link = document.createElement('a')
+        link.download = name
+        link.href = dataURL
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
     }
 
     /*
@@ -302,15 +334,12 @@ class MapEditor {
         mapGenerator.createPerlinNoiseMap(heightMap)
         this.changePolygonsColors('base', mapGenerator)
 
-        mapGenerator.assignHeightMap(heightMap)
-
         let toolBox = new ToolBox()
-        // toolBox.addButton('newFile', , 'toggle')
-        // toolBox.addButton('panTool', , 'toggle')
-        //toolBox.addButton('generateLandscape', , 'toggle')
+        toolBox.addButton('newFile', this.regenerate, 'click')
+        //toolBox.addButton('panTool', , 'toggle')
         // toolBox.addButton('increase', , 'toggle')
         // toolBox.addButton('decrease', , 'toggle')
-        // toolBox.addButton('save', , 'toggle')
+        toolBox.addButton('save', this.exportStage, 'click', { stage: this.stage })
 
         this.addLayersToStage()
         this.drawAllLayers()
@@ -490,7 +519,6 @@ class MapGenerator {
             auxArray.push(heightMap.getColorFromHeight(element))
             //console.log(auxArray)
         })
-        console.log(auxArray)
         this.perlinPolygons = auxArray
     }
 
@@ -560,12 +588,13 @@ class ToolBox {
         needs a divId, a function that is called when clicked
         and a type (that can be click or toggle)
     */
-    addButton(divId, execFunction, type = 'click') {
+    addButton(divId, execFunction, type = 'click', extraInfo = undefined) {
         let button = {
             div: document.getElementById(divId),
             execFunction: execFunction,
             type: type,
             enabled: false,
+            extraInfo: extraInfo
         }
 
         button['div'].onclick = function () {
@@ -579,7 +608,7 @@ class ToolBox {
                 button['enabled'] = true
             }
 
-            execFunction()
+            execFunction(extraInfo)
         }
 
         this.buttons.push(button)

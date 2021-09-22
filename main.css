@@ -29,3 +29,7 @@ body{
 .material-icons:hover{
     color: orange;
 }
+
+.container{
+    cursor: crosshair;
+}
