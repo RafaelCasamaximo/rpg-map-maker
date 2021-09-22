@@ -4,7 +4,7 @@ A RPG map generator which uses Fortune's Algorithm to create a Voronoi diagram. 
 
 ### Development screenshot so far:
 
-![website](https://i.ibb.co/3RVPzCK/Captura-de-tela-2021-09-21-141910.png)
+![website](https://i.ibb.co/z5Xp7PW/Captura-de-tela-2021-09-21-141910.png)
 
 ### Usage
 Just clone the repository and run the index.html file

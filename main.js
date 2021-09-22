@@ -302,6 +302,80 @@ class MapEditor {
         document.body.removeChild(link)
     }
 
+    paintLand() {
+        /*
+        Iterar sobre todas as childs da layer base para
+        adicionar event listener pra quando clicar alterar a cor
+        */
+        let selectedLayer = undefined
+        this.layers.forEach((layerObj) => {
+            if (layerObj['name'] === layerName) {
+                selectedLayer = layerObj['layer']
+            }
+        })
+
+        if (selectedLayer === undefined) {
+            return
+        }
+
+
+    }
+
+    paintWater(infoObj) {
+        let { layerName, layers } = infoObj
+
+        let selectedLayer = undefined
+        layers.forEach((layerObj) => {
+            if (layerObj['name'] === layerName) {
+                selectedLayer = layerObj['layer']
+            }
+        })
+
+        if (selectedLayer === undefined) {
+            return
+        }
+
+        let children = selectedLayer['children']
+
+        children.forEach((child) => {
+            child.on('click', function () {
+                this.fill('#0c6687')
+            })
+        })
+    }
+
+    insertText(infoObj) {
+        let { layerName, layers } = infoObj
+
+        let selectedLayer = undefined
+        layers.forEach((layerObj) => {
+            if (layerObj['name'] === layerName) {
+                selectedLayer = layerObj['layer']
+            }
+        })
+
+        if (selectedLayer === undefined) {
+            return
+        }
+
+        let textContent = prompt('Insert your text:')
+        if (textContent == '') {
+            return
+        }
+
+        let text = new Konva.Text({
+            x: 100,
+            y: 100,
+            text: textContent,
+            fontSize: 30,
+            fontFamily: 'Calibri',
+            fill: 'black',
+            draggable: true
+        });
+
+        selectedLayer.add(text)
+    }
+
     /*
         Main function: the base of the program
         It has object instances, value settings and
@@ -309,6 +383,7 @@ class MapEditor {
     */
     main() {
         this.createNewLayer('base')
+        this.createNewLayer('text')
         this.enableMouseScale()
 
         let mapGenerator = new MapGenerator(20, 20, this.width, this.height)
@@ -338,7 +413,8 @@ class MapEditor {
         toolBox.addButton('newFile', this.regenerate, 'click')
         //toolBox.addButton('panTool', , 'toggle')
         // toolBox.addButton('increase', , 'toggle')
-        // toolBox.addButton('decrease', , 'toggle')
+        toolBox.addButton('decrease', this.paintWater, 'click', { layerName: 'base', layers: this.layers })
+        toolBox.addButton('insertText', this.insertText, 'click', { layerName: 'text', layers: this.layers })
         toolBox.addButton('save', this.exportStage, 'click', { stage: this.stage })
 
         this.addLayersToStage()
