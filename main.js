@@ -1,4 +1,5 @@
 //Create a new mapEditor and call the main function
+
 let mapEditor = new MapEditor('container', innerWidth, innerHeight)
 mapEditor.main()
 
