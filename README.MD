@@ -4,10 +4,11 @@ A RPG map generator which uses Fortune's Algorithm to create a Voronoi diagram. 
 
 ### Development screenshot so far:
 
-![website](https://i.ibb.co/z5Xp7PW/Captura-de-tela-2021-09-21-141910.png)
+![website](https://i.ibb.co/rtvLC1J/Captura-de-tela-2021-09-21-141910.png)
 
 ### Usage
-Just clone the repository and run the index.html file
+You can test it [here](https://rafaelcasamaximo.github.io/rpg-map-maker/)
+Or just clone the repository and run the index.html file
 
 ### Delaunay triangulation
 You can see more about the [Delaunay Triangulation](https://en.wikipedia.org/wiki/Delaunay_triangulation).
